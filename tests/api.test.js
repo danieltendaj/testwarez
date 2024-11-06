@@ -1,14 +1,16 @@
 import { expect} from "chai";
 import pkg from 'pactum';
 const { spec } = pkg;
-import 'dotenv/config';
-import {baseUrl, userId} from "../helpers/data.js";
+import {baseUrl, password, user, userId} from "../helpers/data.js";
 
+let token_response;
+let books = [];
 describe('Api tests', () => {
-    it("get request", async () => {
+    it("Get books", async () => {
         const response = await spec()
             .get(`${baseUrl}/BookStore/v1/Books`)
             .inspect();
+        books = response.body;
         const responseJSON = JSON.stringify(response.body);
         expect(response.statusCode).to.eql(200);
         expect(response.body.books[0].title).to.eql("Git Pocket Guide");
@@ -20,8 +22,8 @@ describe('Api tests', () => {
         const response = await spec()
             .post(`${baseUrl}/Account/v1/User`)
             .withBody({
-                "userName": "testfasfsfs1",
-                "password": process.env.SECRET_PASSWORD,
+                "userName": `${user}`,
+                "password": `${password}`,
             })
             .inspect();
         expect(response.statusCode).to.eql(201);
@@ -29,18 +31,57 @@ describe('Api tests', () => {
         console.log(response.body);
     });
 
-    it.only("Get a token", async () => {
+    it("Generate token", async () => {
         const response = await spec()
             .post(`${baseUrl}/Account/v1/GenerateToken`)
             .withBody({
-                "userName": `${userId}`,
-                "password": process.env.SECRET_PASSWORD,
+                "userName": `${user}`,
+                "password": `${password}`,
             })
             .inspect();
-        const token = response.body.token;
+        token_response = response.body.token;
         expect(response.statusCode).to.eql(200);
         expect(response.body.token).to.not.be.empty;
-        console.log(token);
+        console.log(token_response);
+    });
+
+    it("Get a token", async () => {
+        console.log(token_response)
+    });
+
+    it("Add books", async () => {
+        const isbnArray = JSON.stringify(books.books.map(book => ({ isbn: book.isbn })));
+        console.log(isbnArray);
+        const response = await spec()
+            .post(`${baseUrl}/BookStore/v1/Books`)
+            .withBearerToken(token_response)
+            .withBody({
+                "userId": `${userId}`,
+                "collectionOfIsbns": `${isbnArray}`
+            })
+            .inspect();
+        expect(response.statusCode).to.eql(201);
+        console.log(response.body);
+    });
+
+    it("Delete books", async () => {
+        const response = await spec()
+            .delete(`${baseUrl}/BookStore/v1/Books`)
+            .withBearerToken(token_response)
+            .withQueryParams('UserId', `${userId}`)
+            .inspect();
+        expect(response.statusCode).to.eql(204);
+        console.log(response.body);
+    });
+
+    it("Get the user", async () => {
+        const response = await spec()
+            .get(`${baseUrl}/Account/v1/User/${userId}`)
+            .withBearerToken(token_response)
+            .inspect();
+        expect(response.statusCode).to.eql(200);
+        expect(response.body.books).is.empty;
+        console.log(response.body);
     });
 
 });
