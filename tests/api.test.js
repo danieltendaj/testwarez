@@ -50,14 +50,12 @@ describe('Api tests', () => {
     });
 
     it("Add books", async () => {
-        const isbnArray = JSON.stringify(books.books.map(book => ({ isbn: book.isbn })));
-        console.log(isbnArray);
         const response = await spec()
             .post(`${baseUrl}/BookStore/v1/Books`)
             .withBearerToken(token_response)
             .withBody({
                 "userId": `${userId}`,
-                "collectionOfIsbns": `${isbnArray}`
+                "collectionOfIsbns": books.books.map(book => ({ isbn: book.isbn })),
             })
             .inspect();
         expect(response.statusCode).to.eql(201);
