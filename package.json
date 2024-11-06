@@ -1,0 +1,19 @@
+{
+  "name": "testwarez",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "npx mocha tests/api.test.js --timeout 1000"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "chai": "^5.1.2",
+    "dotenv": "^16.4.5",
+    "mocha": "^10.8.2",
+    "pactum": "^3.7.3"
+  }
+}
